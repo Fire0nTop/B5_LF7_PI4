@@ -34,9 +34,10 @@ while True:
         case "exit":
             quit(0)
         case "read":
-            print("RES: " + serialInst.read(4).decode('utf-8'))
+            print("RES: " + serialInst.readline().decode('utf-8'))
         case _:
             print("default")
             serialInst.write(command.encode('utf-8'))
-            print("RES: " + serialInst.read(4).decode('utf-8'))
+            sleep(0.05)
+            print("RES: " + serialInst.readline().decode('utf-8'))
 
