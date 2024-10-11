@@ -1,8 +1,15 @@
+import threading
 
 from Arduino import Arduino
+from ChangeDetector import ChangeDetector
+from DataBase import DataBase
 
+db = DataBase()
+change_detector = ChangeDetector(db)
+arduino = "" # Arduino(Arduino.selectArduinoPort())
 
-arduino = Arduino(Arduino.selectArduinoPort())
+detection_thread = threading.Thread(target=change_detector.detect_changes, daemon=True)
+detection_thread.start()
 
 while True:
     command = input("cmd: ")
@@ -20,4 +27,3 @@ while True:
             print("reserved: " + str(arduino.setReserved(0, not reserved)))
         case _:
             print(arduino.sendCommand(command))
-
