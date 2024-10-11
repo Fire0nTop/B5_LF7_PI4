@@ -1,6 +1,45 @@
+# Gui.py
 import tkinter as tk
-from tkinter import PhotoImage
+import threading
+from SharedData import shared_data, data_lock  # Import shared data and lock
+from Programm import programm  # Import the programm function
 
+def run_gui():
+    global root, welcome_entry, next_parking_label, occupied_label, free_label
+
+    root = tk.Tk()
+    root.title("Parkplatz Management System")
+
+    # Hintergrundfarbe des Hauptfensters ändern
+    root.configure(bg="gray")
+
+    # Frame für die Willkommensnachricht Eingabe
+    input_frame = tk.Frame(root, bg="gray")
+    input_frame.pack(pady=10, padx=20, fill=tk.X)
+
+    # Willkommensnachricht Eingabe
+    welcome_label = tk.Label(input_frame, text="Willkommensnachricht eingeben:", font=("Helvetica", 14), fg="white", bg="gray")
+    welcome_label.pack(side=tk.LEFT)
+
+    welcome_entry = tk.Entry(input_frame, width=50)
+    welcome_entry.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
+
+    # Start- und Beenden-Knöpfe
+    button_frame = tk.Frame(root, bg="gray")
+    button_frame.pack(pady=10, fill=tk.X)
+
+    start_button = tk.Button(button_frame, text="Start", command=show_parking_info)
+    start_button.pack(side=tk.LEFT, padx=10)
+
+    quit_button = tk.Button(button_frame, text="Beenden", command=root.quit)
+    quit_button.pack(side=tk.LEFT, padx=10)
+
+    # Fenster anpassen
+    root.geometry("800x600")
+    root.minsize(400, 300)  # Mindestgröße des Fensters
+
+    # Start the main loop of the GUI
+    root.mainloop()
 
 # Funktion zum Öffnen eines neuen Fensters mit den Parkplatzdaten
 def show_parking_info():
@@ -10,61 +49,50 @@ def show_parking_info():
     parking_info_window = tk.Toplevel(root)
     parking_info_window.title("Parkplatz Informationen")
 
-    # Hintergrundbild
-    bg_label = tk.Label(parking_info_window, image=background_image)
-    bg_label.place(relwidth=1, relheight=1)
+    # Hintergrundfarbe ändern
+    parking_info_window.configure(bg="gray")
 
     # Eingabetext (Willkommensnachricht)
-    welcome_label = tk.Label(parking_info_window, text=f"{welcome_message}", font=("Helvetica", 24, "bold"), fg="black",
-                             bg="#add8e6")
-    welcome_label.pack(pady=20)
+    welcome_label = tk.Label(parking_info_window, text=welcome_message, font=("Helvetica", 24, "bold"), fg="white", bg="gray")
+    welcome_label.pack(pady=20, padx=20, fill=tk.X)
 
-    # Nächster Parkplatz
-    next_parking_label = tk.Label(parking_info_window, text="Nächster freier Parkplatz: P1",
-                                  font=("Helvetica", 24, "bold"), fg="black", bg="#add8e6")
-    next_parking_label.pack(pady=20)
+    # Create parking information labels (initially empty)
+    global next_parking_label, occupied_label, free_label
 
-    # Parkplatzinformationen in einzelnen Abteilen
-    occupied_label = tk.Label(parking_info_window, text="Besetzte Parkplätze: 25", font=("Helvetica", 20, "bold"),
-                              fg="black", bg="#add8e6")
-    occupied_label.pack(pady=10)
+    next_parking_label = tk.Label(parking_info_window, text="", font=("Helvetica", 24, "bold"), fg="white", bg="gray")
+    next_parking_label.pack(pady=20, padx=20, fill=tk.X)
 
-    free_label = tk.Label(parking_info_window, text="Freie Parkplätze: 15", font=("Helvetica", 20, "bold"), fg="black",
-                          bg="#add8e6")
-    free_label.pack(pady=10)
+    occupied_label = tk.Label(parking_info_window, text="", font=("Helvetica", 20, "bold"), fg="white", bg="gray")
+    occupied_label.pack(pady=10, padx=20, fill=tk.X)
+
+    free_label = tk.Label(parking_info_window, text="", font=("Helvetica", 20, "bold"), fg="white", bg="gray")
+    free_label.pack(pady=10, padx=20, fill=tk.X)
+
+    # Start polling to update the labels based on shared data
+    poll_for_updates(parking_info_window)
 
     # Dynamische Anpassung der Fenstergröße
     parking_info_window.geometry("800x600")
+    parking_info_window.minsize(400, 300)  # Mindestgröße des Fensters
 
+def poll_for_updates(parking_info_window):
+    # This function will be called every 500ms to check for updates
+    with data_lock:
+        # Update the parking info from shared data
+        next_parking_label.config(text=f"Nächster freier Parkplatz: {shared_data['next_parking_spot']}")
+        occupied_label.config(text=f"Besetzte Parkplätze: {shared_data['occupied']}")
+        free_label.config(text=f"Freie Parkplätze: {shared_data['free']}")
 
-# Funktion zum Beenden des Programms
-def quit_program():
-    root.quit()
+    # Continue polling every 500ms
+    parking_info_window.after(500, poll_for_updates, parking_info_window)
 
+def main():
+    # Run the programm logic in a separate thread
+    programm_thread = threading.Thread(target=programm)
+    programm_thread.start()
 
-# Hauptfenster
-root = tk.Tk()
-root.title("Parkplatz Management System")
+    # Start the GUI in the main thread
+    run_gui()
 
-# Hintergrundbild laden
-background_image = PhotoImage(file="gradient.png")
-
-# Hintergrund im Hauptfenster
-bg_label = tk.Label(root, image=background_image)
-bg_label.place(relwidth=1, relheight=1)
-
-# Willkommensnachricht Eingabe
-welcome_label = tk.Label(root, text="Willkommensnachricht eingeben:", font=("Helvetica", 14), fg="black", bg="white")
-welcome_label.pack(pady=10)
-
-welcome_entry = tk.Entry(root)
-welcome_entry.pack(pady=10)
-
-# Start- und Beenden-Knöpfe
-start_button = tk.Button(root, text="Start", command=show_parking_info)
-start_button.pack(pady=10)
-
-quit_button = tk.Button(root, text="Beenden", command=quit_program)
-quit_button.pack(pady=10)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()

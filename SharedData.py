@@ -1,0 +1,12 @@
+# SharedData.py
+import threading
+
+# Shared variables encapsulated in a dictionary
+shared_data = {
+    'occupied': 0,
+    'free': 0,
+    'next_parking_spot': ''
+}
+
+# Lock for thread-safe access to shared data
+data_lock = threading.Lock()

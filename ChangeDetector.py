@@ -62,6 +62,5 @@ class ChangeDetector:
         while True:
             current_data = self.db.findAll()
             compare_data(self.previous_data, current_data)
-            sleep(self.check_interval)  # Wait before the next check
             self.previous_data = current_data  # Update previous data
-
+            sleep(self.check_interval)  # Wait before the next check
