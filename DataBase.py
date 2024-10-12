@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-
+import time  # Import time to get the current timestamp
 import requests
 from dotenv import load_dotenv
 
@@ -13,7 +13,11 @@ class ParkplatzStatus(Enum):
 
     @staticmethod
     def get_status(occupied: bool = None, reserved: bool = None, fromAdmin: bool = None, status_str: str = None):
-        # Check if status is provided as a string
+        # Check if both a status string and booleans are provided, which would be inconsistent
+        if status_str is not None and (occupied is not None or reserved is not None or fromAdmin is not None):
+            raise ValueError("Cannot provide both a status string and boolean flags.")
+
+        # Handle the case where status is provided as a string
         if status_str is not None:
             status_str = status_str.lower()
             if status_str == "frei":
@@ -27,9 +31,12 @@ class ParkplatzStatus(Enum):
             elif status_str == "deaktiviert":
                 return ParkplatzStatus.DEAKTIVIERT
             else:
-                raise ValueError("Invalid status string")
+                raise ValueError(f"Invalid status string: {status_str}")
 
-        # Fallback to bool checks if string is not provided
+        # Fallback to boolean checks if string is not provided
+        if occupied is None or reserved is None:
+            raise ValueError("Occupied and reserved flags must be provided if no status string is given.")
+
         if not occupied and not reserved:
             return ParkplatzStatus.FREI
         elif occupied and not reserved:
@@ -67,26 +74,8 @@ CREATE TABLE parkplatz (
 );
 """
 
-insert_sql = """
-INSERT INTO parkplatz (reihe, parkplatz_nummer, arduino_id, arduino_parkplatz_id, status, spezial, zeitstempel)
-VALUES (1, 101, 12345, 54321, 'Frei', 0, 1696672984);
-"""
-
-update_sql = """
-UPDATE parkplatz
-SET reihe = 2, 
-    parkplatz_nummer = 102, 
-    arduino_id = 67890, 
-    arduino_parkplatz_id = 98765, 
-    status = 'Besetzt', 
-    spezial = 1, 
-    zeitstempel = 1696679999
-WHERE key_id = 1;
-"""
-
 # Load environment variables from the .env file
 load_dotenv()
-
 
 class DataBase:
     def __init__(self):
@@ -119,6 +108,10 @@ class DataBase:
             print("No records found in the response.")
             return []
 
+    def getCurrentTimestamp(self):
+        """Returns the current timestamp."""
+        return int(time.time())
+
     def findAll(self):
         return self.formatResponse(self.sendSQL("SELECT * FROM `parkplatz`;"))
 
@@ -132,13 +125,15 @@ class DataBase:
         return self.formatResponse(
             self.sendSQL(f"SELECT * FROM parkplatz WHERE status = '{status}';"))  # Enclose status in quotes
 
-    def newParkplatz(self, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special, timestamp):
+    def newParkplatz(self, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special):
+        timestamp = self.getCurrentTimestamp()
         return self.formatResponse(self.sendSQL(
             f"INSERT INTO parkplatz (reihe, parkplatz_nummer, arduino_id, arduino_parkplatz_id, status, spezial, zeitstempel) VALUES "
             f"({reihe}, {parkplatzNummer}, {arduinoID}, {arduinoParkplatzID}, '{status}', {str(special).upper()}, {timestamp});"
         ))  # Ensure proper formatting of the SQL statement
 
-    def updateParkplatzWithReiheAndNummer(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special, timestamp):
+    def updateParkplatzWithReiheAndNummer(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special):
+        timestamp = self.getCurrentTimestamp()
         return self.formatResponse(self.sendSQL(
             f"UPDATE parkplatz SET reihe = {reihe}, parkplatz_nummer = {parkplatzNummer}, "
             f"arduino_id = {arduinoID}, arduino_parkplatz_id = {arduinoParkplatzID}, status = '{status}', spezial = {str(special).upper()}, "
@@ -146,10 +141,11 @@ class DataBase:
         ))  # Ensure proper formatting of the SQL statement
 
     def updateParkplatz(self, ID, arduinoID, arduinoParkplatzID, status, special):
+        timestamp = self.getCurrentTimestamp()
         return self.formatResponse(self.sendSQL(
             f"UPDATE parkplatz SET "
             f"arduino_id = {arduinoID}, arduino_parkplatz_id = {arduinoParkplatzID}, "
-            f"status = '{status}', spezial = {str(special).upper()} "
+            f"status = '{status}', spezial = {str(special).upper()}, zeitstempel = {timestamp} "
             f"WHERE key_id = {ID};"
         ))
 
@@ -173,3 +169,27 @@ class DataBase:
         return self.formatResponse(self.sendSQL(
             f"SELECT * FROM parkplatz WHERE arduino_id = {arduinoID} AND arduino_parkplatz_id = {parkplatzID};"
         ))
+
+    def findNextSpot(self):
+        return self.formatResponse(self.sendSQL(
+            f"SELECT * FROM parkplatz WHERE status = 'Frei' ORDER BY reihe ASC, parkplatz_nummer ASC LIMIT 1"
+        ))
+
+    def getTotalAmount(self):
+        return self.formatResponse(self.sendSQL(
+            f"SELECT COUNT(*) AS total_parkplaetze FROM parkplatz;"
+        ))
+
+    def getFreeAmount(self):
+        return self.formatResponse(self.sendSQL(
+            f"SELECT COUNT(*) AS total_free_parkplaetze FROM parkplatz WHERE status = 'Frei';"
+        ))
+
+    def setParkplatzToFreeIfOlderThan(self,timeDifference , givenTimestamp):
+        """Sets all parkplätze to 'Frei' if their timestamp is less than the given timestamp."""
+        query = f"""
+        UPDATE parkplatz
+        SET status = 'Frei'
+        WHERE zeitstempel < {givenTimestamp - timeDifference};
+        """
+        return self.formatResponse(self.sendSQL(query))

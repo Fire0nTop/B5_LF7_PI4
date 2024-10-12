@@ -1,3 +1,6 @@
+import threading
+from http.client import responses
+
 import serial.tools.list_ports
 from time import sleep
 
@@ -8,13 +11,15 @@ class Arduino:
         self.serialInst.baudrate = 9600
         self.serialInst.port = port
         self.serialInst.open()
+        self.serial_lock = threading.Lock()
 
     def sendCommand(self, command):
-        print(f"CMD: {command}")
-        self.serialInst.write(command.encode('utf-8'))
-        sleep(0.05)
-        response = self.serialInst.readline().decode('utf-8').strip()  # Clean response
-        print(f"RES: {response}")
+        with self.serial_lock:
+            print(f"CMD: {command}")
+            self.serialInst.write(command.encode('utf-8'))
+            sleep(0.05)
+            response = self.serialInst.readline().decode('utf-8').strip()  # Clean response
+            print(f"RES: {response}")
         return response
 
     @staticmethod
@@ -37,6 +42,14 @@ class Arduino:
         print(f'Selecting: {ports[choice].device}')
         return ports[choice].device
 
+class SchrankeArduino(Arduino):
+    def setSchranke(self,on):
+        response = self.sendCommand(f"SCHRANKE {'ON' if on else 'OFF'}")
+        return response == "true"
+
+    def getStatus(self):
+        response = self.sendCommand("STATUS")
+        return int(response)
 
 class ParkplatzArduino(Arduino):
     def setReserved(self, ID, on):
