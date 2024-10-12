@@ -17,6 +17,28 @@ class Arduino:
         print(f"RES: {response}")
         return response
 
+    @staticmethod
+    def selectArduinoPort():
+        ports = serial.tools.list_ports.comports()
+        choices = []
+        print('PORT\tDEVICE\t\t\tMANUFACTURER')
+
+        for index, value in enumerate(sorted(ports)):
+            if value.hwid != 'n/a':
+                choices.append(index)
+                print(f"{index}\t{value.name}\t{value.manufacturer}")
+
+        choice = -1
+        while choice not in choices:
+            answer = input("➜ Select your port: ")
+            if answer.isnumeric() and int(answer) in choices:
+                choice = int(answer)
+
+        print(f'Selecting: {ports[choice].device}')
+        return ports[choice].device
+
+
+class ParkplatzArduino(Arduino):
     def setReserved(self, ID, on):
         response = self.sendCommand(f"{ID}RESERVE {'ON' if on else 'OFF'}")
         return response == f"{ID}true"
@@ -62,22 +84,12 @@ class Arduino:
 
         return num, occupied, reserved, special
 
-    @staticmethod
-    def selectArduinoPort():
-        ports = serial.tools.list_ports.comports()
-        choices = []
-        print('PORT\tDEVICE\t\t\tMANUFACTURER')
+    def getAnzahlParkplaetze(self):
+        response = self.sendCommand("ANZAHL PARKPLAETZE").strip()
 
-        for index, value in enumerate(sorted(ports)):
-            if value.hwid != 'n/a':
-                choices.append(index)
-                print(f"{index}\t{value.name}\t{value.manufacturer}")
+        try:
+            anzahl_parkplaetze = int(response)
+        except ValueError:
+            raise ValueError("Unexpected response for number of parking spots")
 
-        choice = -1
-        while choice not in choices:
-            answer = input("➜ Select your port: ")
-            if answer.isnumeric() and int(answer) in choices:
-                choice = int(answer)
-
-        print(f'selecting: {ports[choice].device}')
-        return ports[choice].device
+        return anzahl_parkplaetze

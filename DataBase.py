@@ -1,6 +1,58 @@
 import os
+from enum import Enum
+
 import requests
 from dotenv import load_dotenv
+
+class ParkplatzStatus(Enum):
+    FREI = "Frei"
+    BESETZT = "Besetzt"
+    RESERVIERT_SYSTEM = "Reserviert (System)"
+    RESERVIERT_ADMIT = "Reserviert (Admit)"
+    DEAKTIVIERT = "Deaktiviert"
+
+    @staticmethod
+    def get_status(occupied: bool = None, reserved: bool = None, fromAdmin: bool = None, status_str: str = None):
+        # Check if status is provided as a string
+        if status_str is not None:
+            status_str = status_str.lower()
+            if status_str == "frei":
+                return ParkplatzStatus.FREI
+            elif status_str == "besetzt":
+                return ParkplatzStatus.BESETZT
+            elif status_str == "reserviert (system)":
+                return ParkplatzStatus.RESERVIERT_SYSTEM
+            elif status_str == "reserviert (admit)":
+                return ParkplatzStatus.RESERVIERT_ADMIT
+            elif status_str == "deaktiviert":
+                return ParkplatzStatus.DEAKTIVIERT
+            else:
+                raise ValueError("Invalid status string")
+
+        # Fallback to bool checks if string is not provided
+        if not occupied and not reserved:
+            return ParkplatzStatus.FREI
+        elif occupied and not reserved:
+            return ParkplatzStatus.BESETZT
+        elif reserved and occupied and not fromAdmin:
+            return ParkplatzStatus.RESERVIERT_SYSTEM
+        elif reserved and occupied and fromAdmin:
+            return ParkplatzStatus.RESERVIERT_ADMIT
+        else:
+            return ParkplatzStatus.DEAKTIVIERT
+
+    @staticmethod
+    def get_flags(status: 'ParkplatzStatus'):
+        if status == ParkplatzStatus.FREI:
+            return False, False  # occupied, reserved
+        elif status == ParkplatzStatus.BESETZT:
+            return True, False  # occupied, reserved
+        elif status == ParkplatzStatus.RESERVIERT_SYSTEM or status == ParkplatzStatus.RESERVIERT_ADMIT:
+            return True, True  # occupied, reserved
+        elif status == ParkplatzStatus.DEAKTIVIERT:
+            return False, True  # No active states
+        else:
+            raise ValueError("Invalid ParkplatzStatus value")
 
 create_table_sql = """
 CREATE TABLE parkplatz (
@@ -38,7 +90,7 @@ load_dotenv()
 
 class DataBase:
     def __init__(self):
-        self.url = os.getenv("PHP_SERVICE_URL")  # z.B. "https://voidtalk.de/B5_LF7/sql.php"
+        self.url = os.getenv("PHP_SERVICE_URL")  # e.g., "https://voidtalk.de/B5_LF7/sql.php"
 
     def sendSQL(self, query):
         """Sends an SQL query and returns the JSON response."""
@@ -86,12 +138,20 @@ class DataBase:
             f"({reihe}, {parkplatzNummer}, {arduinoID}, {arduinoParkplatzID}, '{status}', {str(special).upper()}, {timestamp});"
         ))  # Ensure proper formatting of the SQL statement
 
-    def updateParkplatz(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special, timestamp):
+    def updateParkplatzWithReiheAndNummer(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special, timestamp):
         return self.formatResponse(self.sendSQL(
             f"UPDATE parkplatz SET reihe = {reihe}, parkplatz_nummer = {parkplatzNummer}, "
             f"arduino_id = {arduinoID}, arduino_parkplatz_id = {arduinoParkplatzID}, status = '{status}', spezial = {str(special).upper()}, "
             f"zeitstempel = {timestamp} WHERE key_id = {ID};"
         ))  # Ensure proper formatting of the SQL statement
+
+    def updateParkplatz(self, ID, arduinoID, arduinoParkplatzID, status, special):
+        return self.formatResponse(self.sendSQL(
+            f"UPDATE parkplatz SET "
+            f"arduino_id = {arduinoID}, arduino_parkplatz_id = {arduinoParkplatzID}, "
+            f"status = '{status}', spezial = {str(special).upper()} "
+            f"WHERE key_id = {ID};"
+        ))
 
     def reSetupTabel(self):
         dropResponse = self.sendSQL("DROP TABLE IF EXISTS parkplatz;")
@@ -107,3 +167,9 @@ class DataBase:
             "zeitstempel BIGINT NOT NULL);"
         )
         return dropResponse, createResponse
+
+    def findWithArduinoAndParkplatzID(self, arduinoID, parkplatzID):
+        """Find a parking spot by arduino_id and arduino_parkplatz_id."""
+        return self.formatResponse(self.sendSQL(
+            f"SELECT * FROM parkplatz WHERE arduino_id = {arduinoID} AND arduino_parkplatz_id = {parkplatzID};"
+        ))
