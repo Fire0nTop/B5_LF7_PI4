@@ -1,5 +1,5 @@
-import time
 from time import sleep
+
 
 class ChangeDetector:
     def __init__(self, check_interval=1):
@@ -40,7 +40,6 @@ class ChangeDetector:
         """
         raise NotImplementedError("Subclasses must implement compare_data method")
 
-from SharedData import data_lock, dataBaseChanges
 
 class DatabaseChangeDetector(ChangeDetector):
     def __init__(self, database, manager, check_interval=1):
@@ -100,6 +99,7 @@ class DatabaseChangeDetector(ChangeDetector):
                 special = bool(int(current_records[key]['spezial']))
                 # Notify the manager about the database change
                 self.manager.on_db_change(id, status, special)
+
 
 class ArduinoChangeDetector(ChangeDetector):
     def __init__(self, arduino, manager, check_interval=1):

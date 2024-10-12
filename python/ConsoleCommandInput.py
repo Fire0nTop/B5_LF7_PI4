@@ -1,11 +1,10 @@
-import threading
 from time import sleep
 
 from SharedData import data_lock, shared_data
 
 
 class ConsoleCommandInput():
-    def __init__(self,manager):
+    def __init__(self, manager):
         self.manager = manager
         return
 
@@ -16,7 +15,7 @@ class ConsoleCommandInput():
                 shared_data['parking_spot_amount'] = 10
                 shared_data['free'] -= 1
             sleep(1)
-            #print(shared_data['free'])
+            # print(shared_data['free'])
             match command:
                 case "exit":
                     print("Exiting program...")

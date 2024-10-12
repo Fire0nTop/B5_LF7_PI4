@@ -1,8 +1,10 @@
 import os
-from enum import Enum
 import time  # Import time to get the current timestamp
+from enum import Enum
+
 import requests
 from dotenv import load_dotenv
+
 
 class ParkplatzStatus(Enum):
     FREI = "Frei"
@@ -61,6 +63,7 @@ class ParkplatzStatus(Enum):
         else:
             raise ValueError("Invalid ParkplatzStatus value")
 
+
 create_table_sql = """
 CREATE TABLE parkplatz (
     key_id INT AUTO_INCREMENT PRIMARY KEY,       -- Primary Key with auto-increment
@@ -76,6 +79,7 @@ CREATE TABLE parkplatz (
 
 # Load environment variables from the .env file
 load_dotenv()
+
 
 class DataBase:
     def __init__(self):
@@ -132,7 +136,8 @@ class DataBase:
             f"({reihe}, {parkplatzNummer}, {arduinoID}, {arduinoParkplatzID}, '{status}', {str(special).upper()}, {timestamp});"
         ))  # Ensure proper formatting of the SQL statement
 
-    def updateParkplatzWithReiheAndNummer(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status, special):
+    def updateParkplatzWithReiheAndNummer(self, ID, reihe, parkplatzNummer, arduinoID, arduinoParkplatzID, status,
+                                          special):
         timestamp = self.getCurrentTimestamp()
         return self.formatResponse(self.sendSQL(
             f"UPDATE parkplatz SET reihe = {reihe}, parkplatz_nummer = {parkplatzNummer}, "
@@ -185,7 +190,7 @@ class DataBase:
             f"SELECT COUNT(*) AS total_free_parkplaetze FROM parkplatz WHERE status = 'Frei';"
         ))
 
-    def setParkplatzToFreeIfOlderThan(self,timeDifference , givenTimestamp):
+    def setParkplatzToFreeIfOlderThan(self, timeDifference, givenTimestamp):
         """Sets all parkplätze to 'Frei' if their timestamp is less than the given timestamp."""
         query = f"""
         UPDATE parkplatz

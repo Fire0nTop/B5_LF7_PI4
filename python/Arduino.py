@@ -1,8 +1,7 @@
 import threading
-from http.client import responses
+from time import sleep
 
 import serial.tools.list_ports
-from time import sleep
 
 
 class Arduino:
@@ -42,14 +41,16 @@ class Arduino:
         print(f'Selecting: {ports[choice].device}')
         return ports[choice].device
 
+
 class SchrankeArduino(Arduino):
-    def setSchranke(self,on):
+    def setSchranke(self, on):
         response = self.sendCommand(f"SCHRANKE {'ON' if on else 'OFF'}")
         return response == "true"
 
     def getStatus(self):
         response = self.sendCommand("STATUS")
         return int(response)
+
 
 class ParkplatzArduino(Arduino):
     def setReserved(self, ID, on):

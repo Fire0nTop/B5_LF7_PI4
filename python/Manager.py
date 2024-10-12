@@ -1,5 +1,6 @@
 import threading
 import time
+from queue import Queue
 from time import sleep
 
 from Arduino import ParkplatzArduino, Arduino, SchrankeArduino
@@ -7,11 +8,7 @@ from ChangeDetector import DatabaseChangeDetector, ArduinoChangeDetector
 from ConsoleCommandInput import ConsoleCommandInput
 from DataBase import ParkplatzStatus, DataBase
 from SchrankeManager import SchrankeManager
-from SharedData import dataBaseChanges, data_lock
-
-import threading
-import time
-from queue import Queue
+from SharedData import dataBaseChanges
 
 
 class Manager():
@@ -47,7 +44,7 @@ class Manager():
         arduino_change_thread.start()
 
         # Initialize SchrankeManager
-        self.schranke_manager = SchrankeManager(self.database,self.schranke_arduino)
+        self.schranke_manager = SchrankeManager(self.database, self.schranke_arduino)
         schranke_manager_thread = threading.Thread(target=self.schranke_manager.run, daemon=True)
         schranke_manager_thread.start()
 
@@ -105,7 +102,7 @@ class Manager():
         print(f"Updating Arduino from Database for Parkplatz {parkplatz_id}: {status}, Special: {special}")
         # Update Arduino's state based on database changes
         print(status)
-        occupied, reserved = ParkplatzStatus.get_flags(ParkplatzStatus.get_status(None,None,None,status))
+        occupied, reserved = ParkplatzStatus.get_flags(ParkplatzStatus.get_status(None, None, None, status))
         self.parkplatz_arduino.setReserved(parkplatz_id, reserved)
         self.parkplatz_arduino.setSpecial(parkplatz_id, special)
 
@@ -134,14 +131,15 @@ class Manager():
         self.update_arduino_from_db(parkplatz_id, status, special)
 
     def on_arduino_change(self, parkplatz_id, occupied, reserved, special):
-        print(f"Detected change in Arduino for Parkplatz {parkplatz_id}: Occupied={occupied}, Reserved={reserved}, Special={special}")
+        print(
+            f"Detected change in Arduino for Parkplatz {parkplatz_id}: Occupied={occupied}, Reserved={reserved}, Special={special}")
         # Update Database based on the Arduino changes
         self.update_db_from_arduino(parkplatz_id, occupied, reserved, special)
 
     def update_arduino_from_db(self, parkplatz_id, status, special):
         # Translate status back to occupied, reserved flags and update Arduino
         occupied, reserved = ParkplatzStatus.get_flags(ParkplatzStatus.get_status(status_str=status))
-        #self.parkplatz_arduino.setOccupied(parkplatz_id, occupied)
+        # self.parkplatz_arduino.setOccupied(parkplatz_id, occupied)
         self.parkplatz_arduino.setReserved(parkplatz_id, reserved)
         self.parkplatz_arduino.setSpecial(parkplatz_id, special)
 

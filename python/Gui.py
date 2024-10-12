@@ -1,8 +1,10 @@
 # Gui.py
-import tkinter as tk
 import threading
+import tkinter as tk
+
 from Manager import Manager
 from SharedData import shared_data, data_lock  # Import shared data and lock
+
 
 def run_gui():
     global root, welcome_entry, next_parking_label, occupied_label, free_label, input_frame, button_frame
@@ -18,7 +20,8 @@ def run_gui():
     input_frame.pack(pady=10, padx=20, fill=tk.X)
 
     # Willkommensnachricht Eingabe
-    welcome_label = tk.Label(input_frame, text="Willkommensnachricht eingeben:", font=("Helvetica", 14), fg="white", bg="gray")
+    welcome_label = tk.Label(input_frame, text="Willkommensnachricht eingeben:", font=("Helvetica", 14), fg="white",
+                             bg="gray")
     welcome_label.pack(side=tk.LEFT)
 
     welcome_entry = tk.Entry(input_frame, width=50)
@@ -51,6 +54,7 @@ def run_gui():
     # Start the main loop of the GUI
     root.mainloop()
 
+
 # Funktion zum Anzeigen der Parkplatzinformationen im Hauptfenster
 def show_parking_info():
     # Remove the welcome message input and buttons when parking info is shown
@@ -66,6 +70,7 @@ def show_parking_info():
     # Start polling to update the labels based on shared data
     poll_for_updates()
 
+
 def poll_for_updates():
     # This function will be called every 500ms to check for updates
     with data_lock:
@@ -76,6 +81,7 @@ def poll_for_updates():
     # Continue polling every 500ms
     root.after(500, poll_for_updates)
 
+
 def main():
     # Run the programm logic in a separate thread
     manager = Manager()
@@ -85,6 +91,7 @@ def main():
 
     # Start the GUI in the main thread
     run_gui()
+
 
 if __name__ == "__main__":
     main()
