@@ -1,0 +1,55 @@
+<section hlmCard>
+  <div hlmCardHeader>
+    @if (specificParkplatzData) {
+      <h3 class="text-sm font-medium leading-none" hlmCardTitle>Parkplatz {{ specificParkplatzData.key_id }}</h3>
+      <p class="text-sm text-muted-foreground"><strong>Arduino ID:</strong> {{ specificParkplatzData.arduino_id }}</p>
+      <p class="text-sm text-muted-foreground"><strong>Arduino Parkplatz ID:</strong> {{ specificParkplatzData.arduino_parkplatz_id }}</p>
+    } @else {
+      <h3 class="text-sm font-medium leading-none" hlmCardTitle>Parkplatz</h3>
+      <p>Loading Parkplatz data...</p>
+    }
+  </div>
+
+  <div hlmCardContent class="grid gap-4">
+    @if (specificParkplatzData) {
+      <div class="flex items-center p-4 border border-border space-x-4 rounded-md">
+        <div class="flex-1 space-y-1">
+          <p class="text-sm text-muted-foreground">
+            <strong>Reihe:</strong>
+            <input class="w-56" hlmInput type="number" [(ngModel)]="specificParkplatzData.reihe" (ngModelChange)="onReiheChange($event)" placeholder="Reihe" />
+          </p>
+
+          <p class="text-sm text-muted-foreground">
+            <strong>Nummer:</strong>
+            <input class="w-56" hlmInput type="number" [(ngModel)]="specificParkplatzData.parkplatz_nummer" (ngModelChange)="onNummerChange($event)" placeholder="Nummer" />
+          </p>
+
+          <p class="text-sm text-muted-foreground"><strong>Status:</strong></p>
+          <brn-select class="inline-block" [(ngModel)]="specificParkplatzData.status" (ngModelChange)="onStatusChange($event)" placeholder="Status Auswählen">
+            <hlm-select-trigger class="w-56">
+              <hlm-select-value />
+            </hlm-select-trigger>
+            <hlm-select-content>
+              <hlm-option value="Frei">Frei</hlm-option>
+              <hlm-option value="Besetzt" class="hidden">Besetzt</hlm-option>
+              <hlm-option value="Reserviert (System)" class="hidden">Reserviert (System)</hlm-option>
+              <hlm-option value="Reserviert (Admit)">Reserviert</hlm-option>
+              <hlm-option value="Deaktiviert">Deaktiviert</hlm-option>
+            </hlm-select-content>
+          </brn-select>
+
+          <p class="text-sm text-muted-foreground"><strong>Spezial:</strong></p>
+          <hlm-switch class="mr-2" [(ngModel)]="specificParkplatzData.spezial" (ngModelChange)="onSpezialToggle($event)"/>
+
+          <p class="text-sm text-muted-foreground"><strong>Letzte Änderung:</strong> {{ getTimeAgo() }}</p>
+        </div>
+      </div>
+    }
+
+    @if (errorMessage != "") {
+      <div>
+        <p class="error">{{ errorMessage }}</p>
+      </div>
+    }
+  </div>
+</section>

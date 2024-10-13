@@ -1,0 +1,22 @@
+<section hlmCard>
+  <div hlmCardHeader>
+    <h3 class="text-lg font-medium leading-none">
+      Admin Dashboard
+    </h3>
+  </div>
+  <div hlmCardContent>
+    <div>
+      <p class="text-sm text-muted-foreground"><strong>Select Status for All Parkplätze:</strong></p>
+      <brn-select class="inline-block" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusChange($event)" placeholder="Status Auswählen">
+        <hlm-select-trigger class="w-56">
+          <hlm-select-value />
+        </hlm-select-trigger>
+        <hlm-select-content>
+          <hlm-option value="Frei">Frei</hlm-option>
+          <hlm-option value="Reserviert (Admit)">Reserviert</hlm-option>
+          <hlm-option value="Deaktiviert">Deaktiviert</hlm-option>
+        </hlm-select-content>
+      </brn-select>
+    </div>
+  </div>
+</section>

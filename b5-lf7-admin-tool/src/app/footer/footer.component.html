@@ -1,0 +1,15 @@
+<section hlmCard>
+  <div hlmCardHeader>
+    <h3 class="text-lg font-medium leading-none">Auto Update Status</h3>
+  </div>
+  <div hlmCardContent>
+    <div class="flex justify-between items-center">
+      @if (countdown !== null) {
+        <span>Auto Update in {{ countdown }} Seconds</span>
+      } @else {
+        <span>Loading...</span>
+      }
+      <button (click)="fetchDataNow()" class="btn btn-primary">Update Now</button>
+    </div>
+  </div>
+</section>
