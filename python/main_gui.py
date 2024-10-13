@@ -49,21 +49,25 @@ def run_main_gui(dummy_data=False):
     root.geometry("800x600")
     root.minsize(400, 300)
 
-    # Scrollen mit dem Mausrad
-    root.bind("<MouseWheel>", zoom)
+    # Scrollen mit den Pfeiltasten
+    root.bind("<Left>", zoom_out)  # Zoom out on left arrow
+    root.bind("<Right>", zoom_in)   # Zoom in on right arrow
 
     root.mainloop()
 
 
-def zoom(event):
+def zoom_in(event):
     global current_font_size
+    current_font_size += 2
+    current_font_size = max(8, current_font_size)
 
-    if event.delta > 0:
-        current_font_size += 2
-    else:
-        current_font_size -= 2
+    for widget in root.winfo_children():
+        update_font_size(widget, current_font_size)
 
-    # Grenze der Schriftgröße festlegen
+
+def zoom_out(event):
+    global current_font_size
+    current_font_size -= 2
     current_font_size = max(8, current_font_size)
 
     for widget in root.winfo_children():
