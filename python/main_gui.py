@@ -6,8 +6,7 @@ from SharedData import shared_data, data_lock
 
 
 def run_main_gui(dummy_data=False):
-    global root, welcome_entry, next_parking_label, occupied_label, free_label, input_frame, button_frame, current_font_size
-
+    global root, welcome_entry, next_parking_label, free_label, welcome_label_display, input_frame, button_frame, current_font_size
     current_font_size = 14  # Standard-Schriftgröße
 
     root = tk.Tk()
@@ -37,14 +36,15 @@ def run_main_gui(dummy_data=False):
     quit_button = ttk.Button(button_frame, text="Beenden", command=root.quit, style="TButton")
     quit_button.pack(side=tk.LEFT, padx=10)
 
-    next_parking_label = tk.Label(root, text="", font=("Helvetica", 24, "bold"), fg="white", bg="black")
-    next_parking_label.pack(pady=20, padx=20, fill=tk.X)
-
-    occupied_label = tk.Label(root, text="", font=("Helvetica", 20, "bold"), fg="white", bg="black")
-    occupied_label.pack(pady=10, padx=20, fill=tk.X)
+    # Initialisiere Labels ohne Text
+    welcome_label_display = tk.Label(root, text="", font=("Helvetica", 24, "bold"), fg="white", bg="black")
+    welcome_label_display.pack(pady=20, padx=20, fill=tk.X)
 
     free_label = tk.Label(root, text="", font=("Helvetica", 20, "bold"), fg="white", bg="black")
     free_label.pack(pady=10, padx=20, fill=tk.X)
+
+    next_parking_label = tk.Label(root, text="", font=("Helvetica", 24, "bold"), fg="white", bg="black")
+    next_parking_label.pack(pady=10, padx=20, fill=tk.X)
 
     root.geometry("800x600")
     root.minsize(400, 300)
@@ -79,24 +79,30 @@ def update_font_size(widget, size):
 
 
 def show_parking_info(dummy_data):
+    global welcome_label_display, free_label, next_parking_label
+
     welcome_message = welcome_entry.get()  # Get the welcome message before destroying the widgets
     input_frame.destroy()
     button_frame.destroy()
-    welcome_label = tk.Label(root, text=welcome_message, font=("Helvetica", 24, "bold"), fg="white", bg="black")
-    welcome_label.pack(pady=20, padx=20, fill=tk.X)
+
+    welcome_label_display.config(text=welcome_message)
+
+    if dummy_data:
+        shared_data['next_parking_spot'] = 'D1'
+        shared_data['free'] = 10
+        shared_data['parking_spot_amount'] = 50
+
+    free_label.config(text=f"Freie Parkplätze: {shared_data['free']}/{shared_data['parking_spot_amount']}")
+    next_parking_label.config(text=f"Nächster freier Parkplatz: {shared_data['next_parking_spot']}")
+
     poll_for_updates(dummy_data)
 
 
 def poll_for_updates(dummy_data):
     with data_lock:
-        if dummy_data:
-            shared_data['next_parking_spot'] = 'D1'
-            shared_data['free'] = 10
-            shared_data['parking_spot_amount'] = 50
-
-        next_parking_label.config(text=f"Nächster freier Parkplatz: {shared_data['next_parking_spot']}")
-        occupied_label.config(text=f"Besetzte Parkplätze: {shared_data['parking_spot_amount'] - shared_data['free']}")
-        free_label.config(text=f"Freie Parkplätze: {shared_data['free']}/{shared_data['parking_spot_amount']}")
+        if not dummy_data:
+            free_label.config(text=f"Freie Parkplätze: {shared_data['free']}/{shared_data['parking_spot_amount']}")
+            next_parking_label.config(text=f"Nächster freier Parkplatz: {shared_data['next_parking_spot']}")
 
     root.after(500, lambda: poll_for_updates(dummy_data))
 
