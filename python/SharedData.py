@@ -3,9 +3,9 @@ import threading
 
 # Shared variables encapsulated in a dictionary
 shared_data = {
-    'parking_spot_amount': 2,
+    'parking_spot_amount': 0,
     'free': 0,
-    'next_parking_spot': 'Hellow'
+    'next_parking_spot': '-'
 }
 
 dataBaseChanges = []

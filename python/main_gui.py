@@ -102,7 +102,7 @@ def poll_for_updates(dummy_data):
     with data_lock:
         if not dummy_data:
             free_label.config(text=f"Freie Parkplätze: {shared_data['free']}/{shared_data['parking_spot_amount']}")
-            next_parking_label.config(text=f"Nächster freier Parkplatz: {shared_data['next_parking_spot']}")
+            next_parking_label.config(text=f"{shared_data['next_parking_spot']}")
 
     root.after(500, lambda: poll_for_updates(dummy_data))
 

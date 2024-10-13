@@ -145,6 +145,20 @@ class Manager():
 
     def update_db_from_arduino(self, parkplatz_id, occupied, reserved, special):
         # Translate Arduino status to database format and update DB
-        status = ParkplatzStatus.get_status(occupied, reserved, False).value
-        key_id = int(self.database.findWithArduinoAndParkplatzID(0, parkplatz_id)['records'][0]['key_id'])
-        self.database.updateParkplatz(key_id, 0, parkplatz_id, status, special)
+        def update_db_from_arduino(self, parkplatz_id, occupied, reserved, special):
+            # Translate Arduino status to database format and update DB
+            db_status = ParkplatzStatus.get_status(
+                self.database.findWithArduinoAndParkplatzID(0, parkplatz_id)['records'][0]['status'])
+
+            # Determine the last boolean value based on the current db_status
+            formAdmin = db_status in (ParkplatzStatus.RESERVIERT_ADMIT, ParkplatzStatus.DEAKTIVIERT)
+
+            # Get the new status
+            status = ParkplatzStatus.get_status(occupied, reserved, formAdmin).value
+
+            # Get the key_id from the database
+            key_id = int(self.database.findWithArduinoAndParkplatzID(0, parkplatz_id)['records'][0]['key_id'])
+
+            # Update the parking spot in the database
+            self.database.updateParkplatz(key_id, 0, parkplatz_id, status, special)
+

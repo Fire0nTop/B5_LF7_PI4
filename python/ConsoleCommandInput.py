@@ -20,8 +20,6 @@ class ConsoleCommandInput():
                 case "exit":
                     print("Exiting program...")
                     break  # Exit the loop to end the programm
-                case "initDb":
-                    self.manager.initDataBase()
                 case _:
                     self.manager.parkplatz_arduino.sendCommand(command)
 

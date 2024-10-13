@@ -175,6 +175,18 @@ class DataBase:
             f"SELECT * FROM parkplatz WHERE arduino_id = {arduinoID} AND arduino_parkplatz_id = {parkplatzID};"
         ))
 
+    def setParkplatzToFreeIfOlderThan(self, timeDifference, givenTimestamp):
+        """Sets all parkplätze with status 'Reserviert (System)' to 'Frei'
+           and 'spezial' equal to 0 if their timestamp is less than the given timestamp."""
+        query = f"""
+        UPDATE parkplatz
+        SET status = 'Frei'
+        WHERE zeitstempel < {givenTimestamp - timeDifference}
+        AND status = 'Reserviert (System)'
+        AND spezial = 0;
+        """
+        return self.formatResponse(self.sendSQL(query))
+
     def findNextSpot(self):
         return self.formatResponse(self.sendSQL(
             f"SELECT * FROM parkplatz WHERE status = 'Frei' ORDER BY reihe ASC, parkplatz_nummer ASC LIMIT 1"
@@ -191,10 +203,13 @@ class DataBase:
         ))
 
     def setParkplatzToFreeIfOlderThan(self, timeDifference, givenTimestamp):
-        """Sets all parkplätze to 'Frei' if their timestamp is less than the given timestamp."""
+        """Sets all parkplätze with status 'Reserviert (System)' to 'Frei'
+           if their timestamp is less than the given timestamp."""
         query = f"""
         UPDATE parkplatz
         SET status = 'Frei'
-        WHERE zeitstempel < {givenTimestamp - timeDifference};
+        WHERE zeitstempel < {givenTimestamp - timeDifference}
+        AND status = 'Reserviert (System)';
         """
         return self.formatResponse(self.sendSQL(query))
+
